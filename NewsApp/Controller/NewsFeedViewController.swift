@@ -53,7 +53,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         let item = articles[indexPath.row]
         vc.item = item
         vc.isFromViewController = "NewsFeed"
-        //        present(vc, animated: true)
         show(vc, sender: self)
     }
     

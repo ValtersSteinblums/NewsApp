@@ -31,18 +31,21 @@ class DetailViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         
-        print("FEED SAVED: ", savedNews)
+        if self.isFromViewController == "NewsFeed" {
+            self.title = item?.author
+            titleLabel.text = item?.title
+            descLabel.text = item?.articleDescription
+            newsImageView.sd_setImage(with: URL(string: item?.urlToImage ?? ""))
+            
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            managedObjectContext = appDelegate.persistentContainer.viewContext
+            
+            let alreadySaved = checkIfExists()
+            changeFavouriteButtonState(isSaved: alreadySaved)
+            
+            print("HELLO FROM FEED")
+        }
         
-        self.title = item?.author
-        titleLabel.text = item?.title
-        descLabel.text = item?.articleDescription
-        newsImageView.sd_setImage(with: URL(string: item?.urlToImage ?? ""))
-        
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        managedObjectContext = appDelegate.persistentContainer.viewContext
-        
-        let alreadySaved = checkIfExists()
-        changeFavouriteButtonState(isSaved: alreadySaved)
         
         if self.isFromViewController == "SavedFeed" {
             
@@ -54,8 +57,6 @@ class DetailViewController: UIViewController {
             managedObjectContext = appDelegate.persistentContainer.viewContext
             
             changeFavouriteButtonState(isSaved: true)
-            
-            saveButton.isHidden = true
             
             print("HELLO FROM FAVES")
         }
@@ -90,7 +91,6 @@ class DetailViewController: UIViewController {
         shareNewsArticleVC.popoverPresentationController?.sourceView = sender
         present(shareNewsArticleVC, animated: true, completion: nil)
         shareNewsArticleVC.completionWithItemsHandler = { (activityType, completed:Bool, returnedItems:[Any]?, error: Error?) in
-            
             if completed  {
                 self.dismiss(animated: true, completion: nil)
             }
@@ -98,15 +98,44 @@ class DetailViewController: UIViewController {
     }
     
     @IBAction func saveButtonTapped(_ sender: UIButton) {
-        let alreadySaved = checkIfExists()
-        switch alreadySaved {
-        case true:
+        loadData()
+        if self.isFromViewController == "NewsFeed" {
+            let alreadySaved = checkIfExists()
+            switch alreadySaved {
+            case true:
+                let request: NSFetchRequest<News> = News.fetchRequest()
+                do {
+                    // when core data is empty, returns nil. Any workarounds...?
+                    if let result = try managedObjectContext?.fetch(request) {
+                        for savedNews in result as [NSManagedObject] {
+                            if (savedNews.value(forKey: "newsTitle") as! String) == item?.title {
+                                managedObjectContext?.delete(savedNews)
+                            }
+                        }
+                    }
+                } catch {
+                    print("Something went wrong removing favourites from detail view")
+                }
+                changeFavouriteButtonState(isSaved: false)
+                print("REMOVE SAVE PRESSED: ", savedNews)
+            case false:
+                if let entity = NSEntityDescription.entity(forEntityName: "News", in: self.managedObjectContext!) {
+                    let article = NSManagedObject(entity: entity, insertInto: self.managedObjectContext)
+                    article.setValue(item?.articleDescription, forKey: "newsDescription")
+                    article.setValue(item?.title, forKey: "newsTitle")
+                    article.setValue(item?.urlToImage, forKey: "newsImage")
+                }
+                changeFavouriteButtonState(isSaved: true)
+                print("SAVE PRESSED: ", savedNews)
+            }
+        }
+        if self.isFromViewController == "SavedFeed" {
             let request: NSFetchRequest<News> = News.fetchRequest()
             do {
                 // when core data is empty, returns nil. Any workarounds...?
                 if let result = try managedObjectContext?.fetch(request) {
                     for savedNews in result as [NSManagedObject] {
-                        if (savedNews.value(forKey: "newsTitle") as! String) == item?.title {
+                        if (savedNews.value(forKey: "newsTitle") as! String) == saved?.newsTitle {
                             managedObjectContext?.delete(savedNews)
                         }
                     }
@@ -115,18 +144,10 @@ class DetailViewController: UIViewController {
                 print("Something went wrong removing favourites from detail view")
             }
             changeFavouriteButtonState(isSaved: false)
-        case false:
-            if let entity = NSEntityDescription.entity(forEntityName: "News", in: self.managedObjectContext!) {
-                let article = NSManagedObject(entity: entity, insertInto: self.managedObjectContext)
-                article.setValue(item?.articleDescription, forKey: "newsDescription")
-                article.setValue(item?.title, forKey: "newsTitle")
-                article.setValue(item?.urlToImage, forKey: "newsImage")
-            }
-            changeFavouriteButtonState(isSaved: true)
+            _ = navigationController?.popViewController(animated: true)
+            print("REMOVE SAVE PRESSED: ", savedNews)
         }
-        
         self.saveData()
-        print("SAVE PRESSED: ", savedNews)
     }
     
     // MARK: - Navigation

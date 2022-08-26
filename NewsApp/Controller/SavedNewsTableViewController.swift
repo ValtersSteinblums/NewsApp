@@ -110,6 +110,11 @@ class SavedNewsTableViewController: UITableViewController {
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if savedNews.count != 0 {
+            tableView.backgroundView?.isHidden = true
+        }
+        
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "savedNewsCell", for: indexPath)
 
         let savedArticle = savedNews[indexPath.row]
