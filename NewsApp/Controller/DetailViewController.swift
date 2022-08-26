@@ -85,14 +85,26 @@ class DetailViewController: UIViewController {
         loadData()
     }
     
-    
+    //    https://stackoverflow.com/questions/37938722/how-to-implement-share-button-in-swift
     @IBAction func shareButtonPressed(_ sender: UIButton) {
-        let shareNewsArticleVC = UIActivityViewController(activityItems: [item?.url ?? ""], applicationActivities: nil)
-        shareNewsArticleVC.popoverPresentationController?.sourceView = sender
-        present(shareNewsArticleVC, animated: true, completion: nil)
-        shareNewsArticleVC.completionWithItemsHandler = { (activityType, completed:Bool, returnedItems:[Any]?, error: Error?) in
-            if completed  {
-                self.dismiss(animated: true, completion: nil)
+        if self.isFromViewController == "NewsFeed" {
+            let shareNewsArticleVC = UIActivityViewController(activityItems: [item?.url ?? ""], applicationActivities: nil)
+            shareNewsArticleVC.popoverPresentationController?.sourceView = sender
+            present(shareNewsArticleVC, animated: true, completion: nil)
+            shareNewsArticleVC.completionWithItemsHandler = { (activityType, completed:Bool, returnedItems:[Any]?, error: Error?) in
+                if completed  {
+                    self.dismiss(animated: true, completion: nil)
+                }
+            }
+        }
+        if self.isFromViewController == "SavedFeed" {
+            let shareNewsArticleVC = UIActivityViewController(activityItems: [saved?.newsURL ?? ""], applicationActivities: nil)
+            shareNewsArticleVC.popoverPresentationController?.sourceView = sender
+            present(shareNewsArticleVC, animated: true, completion: nil)
+            shareNewsArticleVC.completionWithItemsHandler = { (activityType, completed:Bool, returnedItems:[Any]?, error: Error?) in
+                if completed  {
+                    self.dismiss(animated: true, completion: nil)
+                }
             }
         }
     }
@@ -124,6 +136,7 @@ class DetailViewController: UIViewController {
                     article.setValue(item?.articleDescription, forKey: "newsDescription")
                     article.setValue(item?.title, forKey: "newsTitle")
                     article.setValue(item?.urlToImage, forKey: "newsImage")
+                    article.setValue(item?.url, forKey: "newsURL")
                 }
                 changeFavouriteButtonState(isSaved: true)
                 print("SAVE PRESSED: ", savedNews)
@@ -144,6 +157,7 @@ class DetailViewController: UIViewController {
                 print("Something went wrong removing favourites from detail view")
             }
             changeFavouriteButtonState(isSaved: false)
+            //            https://stackoverflow.com/questions/28760541/programmatically-go-back-to-previous-viewcontroller-in-swift
             _ = navigationController?.popViewController(animated: true)
             print("REMOVE SAVE PRESSED: ", savedNews)
         }
@@ -155,7 +169,13 @@ class DetailViewController: UIViewController {
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         guard let dVC: WebViewController = segue.destination as? WebViewController else {return}
-        dVC.urlString = item?.url ?? ""
+        
+        if self.isFromViewController == "NewsFeed" {
+            dVC.urlString = item?.url ?? ""
+        } else {
+            dVC.urlString = saved?.newsURL ?? ""
+        }
+        
     }
     
     func checkIfExists() -> Bool {

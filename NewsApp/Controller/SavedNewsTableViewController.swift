@@ -96,13 +96,13 @@ class SavedNewsTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
         if savedNews.count == 0 {
-            tableView.backgroundView = UIImageView(image: UIImage(named: "empty"))
-            
-            tableView.backgroundView?.translatesAutoresizingMaskIntoConstraints = false
-            tableView.backgroundView?.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-            tableView.backgroundView?.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
-            tableView.backgroundView?.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
-            tableView.backgroundView?.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+            let customBackground = CustomBackgroundView()
+            tableView.backgroundView = customBackground
+
+            customBackground.safetyAreaTopAnchor = tableView.safeAreaLayoutGuide.topAnchor
+            customBackground.safetyAreaBottomAnchor = tableView.safeAreaLayoutGuide.bottomAnchor
+            customBackground.safetyLeadingAnchor = tableView.safeAreaLayoutGuide.leadingAnchor
+            customBackground.safetyTrailingAnchor = tableView.safeAreaLayoutGuide.trailingAnchor
         }
         
         return savedNews.count
